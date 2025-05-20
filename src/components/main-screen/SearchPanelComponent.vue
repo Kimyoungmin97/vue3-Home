@@ -48,7 +48,7 @@
     <div v-else class="property-list-container">
       <HouesListComponent
         :locationName="keyword"
-        @back="showSearchResults = false"
+        @back="handleBack"
         @select-property="selectProperty"
       />
     </div>
@@ -69,6 +69,13 @@ const emit = defineEmits(['select-property'])
 const mainActive = inject('mainActive')
 function closePanel() {
   mainActive.value = !mainActive.value
+}
+
+// Handle back button from property list
+function handleBack() {
+  showSearchResults.value = false
+  // Reset the selected property to close the detail component
+  emit('select-property', null)
 }
 
 // 키워드 검색 함수

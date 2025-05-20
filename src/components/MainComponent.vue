@@ -35,7 +35,7 @@
 </template>
 
 <script setup>
-import { markRaw, defineAsyncComponent, inject, ref } from 'vue'
+import { markRaw, defineAsyncComponent, inject, ref, watch } from 'vue'
 
 // 컴포넌트 동적 로드
 const HomeContent = markRaw(defineAsyncComponent(() => import('./content/HomeContent.vue')))
@@ -45,6 +45,9 @@ const SearchPanelComponent = markRaw(
 const MapContent = markRaw(defineAsyncComponent(() => import('./content/MapContent.vue')))
 const HouesDetailComponent = markRaw(
   defineAsyncComponent(() => import('@/components/main-screen/HouesDetailComponent.vue')),
+)
+const CommunityListComponent = markRaw(
+  defineAsyncComponent(() => import('@/components/main-screen/CommunityListComponent.vue')),
 )
 
 // 지도 컴포넌트
@@ -76,6 +79,8 @@ const getMainComponent = () => {
       return SearchPanelComponent
     case 'map':
       return MapContent
+    case 'community':
+      return CommunityListComponent
     default:
       return HomeContent
   }
@@ -104,6 +109,15 @@ const closePropertyDetail = () => {
 
 // mainActive 상태 가져오기
 const mainActive = inject('mainActive')
+
+// Watch for changes in activeMenu and reset selectedProperty when menu changes
+watch(
+  () => props.activeMenu,
+  () => {
+    // Reset selected property when menu changes
+    selectedProperty.value = null
+  },
+)
 </script>
 
 <style scoped>
