@@ -32,7 +32,7 @@ const emit = defineEmits(['menu-click'])
 
 // 메뉴 아이템 데이터
 const menuItems = ref([
-  { id: 'home', text: '키즈홈', icon: 'bi-house-door' },
+  { id: 'login', text: '키즈홈', icon: 'bi-house-door' },
   { id: 'search', text: '실거래가', icon: 'bi-geo-alt' },
   { id: 'profile', text: '마이페이지', icon: 'bi-person' },
   { id: 'community', text: '커뮤니티', icon: 'bi-chat-left-dots' },

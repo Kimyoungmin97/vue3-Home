@@ -14,7 +14,11 @@
       <div class="main-screen" v-if="mainActive">
         <div class="main-screen-content">
           <div class="content-area">
-            <component :is="getMainComponent()" @select-property="handlePropertySelect" />
+            <component
+              :is="getMainComponent()"
+              @select-property="handlePropertySelect"
+              @close="handleClose"
+            />
           </div>
         </div>
       </div>
@@ -46,8 +50,11 @@ const MapContent = markRaw(defineAsyncComponent(() => import('./content/MapConte
 const HouesDetailComponent = markRaw(
   defineAsyncComponent(() => import('@/components/main-screen/HouesDetailComponent.vue')),
 )
-const CommunityListComponent = markRaw(
-  defineAsyncComponent(() => import('@/components/main-screen/CommunityListComponent.vue')),
+const PostListComponent = markRaw(
+  defineAsyncComponent(() => import('@/components/post/PostListComponent.vue')),
+)
+const LoginFormComponent = markRaw(
+  defineAsyncComponent(() => import('@/components/member/LoginFormComponent.vue')),
 )
 
 // 지도 컴포넌트
@@ -73,6 +80,8 @@ const selectedProperty = ref(null)
 // 메인 컴포넌트 결정
 const getMainComponent = () => {
   switch (props.activeMenu) {
+    case 'login':
+      return LoginFormComponent
     case 'home':
       return HomeContent
     case 'search':
@@ -80,7 +89,7 @@ const getMainComponent = () => {
     case 'map':
       return MapContent
     case 'community':
-      return CommunityListComponent
+      return PostListComponent
     default:
       return HomeContent
   }
@@ -105,6 +114,11 @@ const handlePropertySelect = (property) => {
 // 매물 상세 정보 닫기
 const closePropertyDetail = () => {
   selectedProperty.value = null
+}
+
+// 컴포넌트 닫기 핸들러
+const handleClose = () => {
+  // 필요한 경우 추가 로직 구현
 }
 
 // mainActive 상태 가져오기
