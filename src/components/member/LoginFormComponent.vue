@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <!-- 헤더 -->
-    <div class="login-header">
+    <div class="login-header" v-if="!showRegister">
       <button class="back-button" @click="goBack">
         <i class="bi bi-chevron-left"></i>
       </button>
@@ -9,7 +9,7 @@
     </div>
 
     <!-- 로그인 폼 -->
-    <div class="login-form">
+    <div class="login-form" v-if="!showRegister">
       <!-- 휴대폰번호/이메일 입력 -->
       <div class="form-group">
         <label>휴대폰번호 · 이메일</label>
@@ -42,18 +42,25 @@
 
       <!-- 회원가입 링크 -->
       <div class="signup-link">
-        <a href="#">신규 가입하기</a>
+        <a href="#" @click.prevent="showRegister = true">신규 가입하기</a>
       </div>
     </div>
+
+    <!-- 회원가입 폼 -->
+    <RegisterFormComponent v-if="showRegister" @close="showRegister = false" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, inject } from 'vue'
+import { ref, computed, inject, provide } from 'vue'
+import RegisterFormComponent from './RegisterFormComponent.vue'
+
+const emit = defineEmits(['close'])
 
 // 폼 데이터
 const username = ref('')
 const password = ref('')
+const showRegister = ref(false)
 
 // 폼 유효성 검사
 const isFormValid = computed(() => {
@@ -65,6 +72,8 @@ const mainActive = inject('mainActive')
 const goBack = () => {
   mainActive.value = !mainActive.value
 }
+
+provide('showRegister', showRegister)
 
 // 로그인 처리
 const login = () => {
