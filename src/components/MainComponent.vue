@@ -184,7 +184,7 @@ watch(
   position: absolute;
   top: 0;
   left: 360px; /* Position right next to main-screen */
-  width: 300px;
+  width: 400px;
   height: 100%;
   background-color: #ffffff;
   border-radius: 12px;

@@ -50,6 +50,8 @@
         :locationName="keyword"
         @back="handleBack"
         @select-property="selectProperty"
+        :houseList="houseList"
+        :onScrollEnd="searchKeyword"
       />
     </div>
   </div>
@@ -57,10 +59,12 @@
 
 <script setup>
 import { ref, inject, defineAsyncComponent } from 'vue'
+import { houseApi } from '@/axios/house'
 
 const HouesListComponent = defineAsyncComponent(() => import('./HouesListComponent.vue'))
 
 const keyword = ref('')
+const lastAptSeq = ref('')
 const activeTab = ref('recent')
 const showSearchResults = ref(false)
 
@@ -78,8 +82,42 @@ function handleBack() {
   emit('select-property', null)
 }
 
+const houseList = ref([])
+
 // 키워드 검색 함수
-function searchKeyword() {
+// const searchKeyword = async () => {
+//   try {
+//     const response = await houseApi({
+//       url: '/search',
+//       method: 'get',
+//       params: { keyword: keyword.value, lastAptSeq: lastAptSeq.value, size: 10 },
+//     })
+//     houseList.value = response.data.data
+//     lastAptSeq.value = houseList.value.at(-1)?.aptSeq ?? null
+//   } catch (e) {
+//     alert(e)
+//   }
+//   if (keyword.value.trim()) {
+//     showSearchResults.value = true
+//   }
+// }
+
+const isLoading = ref(false)
+
+const searchKeyword = async () => {
+  if (isLoading.value) return
+  isLoading.value = true
+  try {
+    const response = await houseApi({
+      url: '/search',
+      method: 'get',
+      params: { keyword: keyword.value, lastAptSeq: lastAptSeq.value, size: 10 },
+    })
+    houseList.value.push(...response.data.data)
+    lastAptSeq.value = houseList.value.at(-1)?.aptSeq ?? null
+  } finally {
+    isLoading.value = false
+  }
   if (keyword.value.trim()) {
     showSearchResults.value = true
   }

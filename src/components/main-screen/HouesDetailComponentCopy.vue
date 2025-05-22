@@ -28,30 +28,26 @@
           </div>
 
           <div class="price-tabs">
-            <div class="tab" :class="{ active: activeTab === 'all' }" @click="switchTab('all')">
-              전체 기간
-            </div>
-            <div
-              class="tab"
-              :class="{ active: activeTab === 'recent' }"
-              @click="switchTab('recent')"
-            >
-              최근 3년
-            </div>
+            <div class="tab active">전체 기간</div>
+            <div class="tab">최근 3년</div>
           </div>
 
           <div class="price-chart">
-            <div id="priceChart" ref="chartContainer" style="width: 100%; height: 200px"></div>
+            <img
+              src="https://via.placeholder.com/350x200?text=Price+Chart"
+              alt="가격 차트"
+              class="img-fluid"
+            />
           </div>
 
-          <div class="price-history" style="max-height: 300px; overflow-y: auto">
+          <div class="price-history">
             <div class="history-header">
               <div>계약일</div>
               <div>면적(층)</div>
               <div>가격</div>
             </div>
 
-            <div class="history-item" v-for="(item, index) in filteredHouseData" :key="index">
+            <div class="history-item" v-for="(item, index) in house" :key="index">
               <div>{{ item.date }}</div>
               <div>{{ item.excluUseAr }}({{ item.floor }}층)</div>
               <div class="price-column">
@@ -161,9 +157,8 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { houseApi } from '@/axios/house'
-import * as echarts from 'echarts'
 
 const props = defineProps({
   property: {
@@ -206,131 +201,6 @@ const detailContent = ref(null)
 const goBack = () => {
   emit('close')
 }
-
-// Chart related
-const chartContainer = ref(null)
-let priceChart = null
-const activeTab = ref('all') // 'all' for 전체 기간, 'recent' for 최근 3년
-
-// Filter house data based on active tab
-const filteredHouseData = computed(() => {
-  if (activeTab.value === 'recent') {
-    // Filter for last 3 years
-    const threeYearsAgo = new Date()
-    threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3)
-
-    return house.value.filter((item) => {
-      const itemDate = new Date(item.date)
-      return itemDate >= threeYearsAgo
-    })
-  }
-  // Return all data for 'all' tab
-  return house.value
-})
-
-// Initialize chart
-const initChart = () => {
-  if (!chartContainer.value) return
-
-  priceChart = echarts.init(chartContainer.value)
-  updateChart()
-
-  // Handle window resize
-  window.addEventListener('resize', () => {
-    priceChart && priceChart.resize()
-  })
-}
-
-// Update chart with data
-const updateChart = () => {
-  if (!priceChart) return
-  // Sort data by date
-  const sortedData = [...filteredHouseData.value].sort((a, b) => {
-    return new Date(a.date) - new Date(b.date)
-  })
-
-  // Prepare chart data
-  const xAxisData = sortedData.map((item) => item.date)
-  let seriesData = sortedData.map((item) => {
-    const raw =
-      typeof item.dealAmount === 'string'
-        ? parseInt(item.dealAmount.replace(/,/g, ''))
-        : item.dealAmount
-    return raw / 10000
-  })
-  if (filteredHouseData.value.length === 0) {
-    seriesData = []
-  }
-  const option = {
-    tooltip: {
-      trigger: 'axis',
-      formatter: (params) => {
-        const { name, value } = params[0]
-        return `${name}: ${value.toLocaleString()} 천만원`
-      },
-    },
-    xAxis: {
-      type: 'category',
-      data: xAxisData,
-      axisLabel: {
-        rotate: 45,
-        fontSize: 10,
-      },
-    },
-    yAxis: {
-      type: 'value',
-      name: '거래가(천만원)', // 👈 단위 변경
-      axisLabel: {
-        formatter: (val) => val.toLocaleString() + '천', // 👈 라벨 포맷
-      },
-    },
-    series: [
-      {
-        data: seriesData,
-        type: 'line',
-        name: '거래가',
-        smooth: true,
-        lineStyle: {
-          color: '#4169e1',
-        },
-        itemStyle: {
-          color: '#4169e1',
-        },
-      },
-    ],
-    grid: {
-      top: '20%',
-      left: '10%',
-      right: '5%',
-      bottom: '18%',
-    },
-  }
-
-  priceChart.setOption(option)
-}
-
-// Switch between tabs
-const switchTab = (tab) => {
-  activeTab.value = tab
-  updateChart()
-}
-
-// Initialize chart when component is mounted
-onMounted(() => {
-  // Wait for DOM to be ready
-  setTimeout(() => {
-    initChart()
-  }, 100)
-})
-
-// Update chart when house data changes
-watch(
-  house,
-  () => {
-    updateChart()
-  },
-  { deep: true },
-)
 </script>
 
 <style scoped>

@@ -1,6 +1,6 @@
 <template>
   <div class="post-container">
-    <div v-if="!showAddPost">
+    <div v-if="!showPostDetail && !showAddPost">
       <!-- 상단 헤더 -->
       <div class="post-header">
         <div class="header-top">
@@ -36,7 +36,12 @@
 
       <!-- 게시글 목록 -->
       <div class="post-list" v-if="!showAddPost">
-        <div v-for="(post, index) in posts" :key="index" class="post-item">
+        <div
+          v-for="(post, index) in posts"
+          :key="index"
+          class="post-item"
+          @click="selectPost(post)"
+        >
           <!-- 사용자 정보 -->
           <div class="user-info">
             <div class="user-profile">
@@ -81,12 +86,20 @@
     </div>
     <!-- 게시글 작성 화면 -->
     <PostAddComponent v-if="showAddPost" @close="showAddPost = false" />
+
+    <!-- 게시글 상세 화면 -->
+    <PostDetailComponent
+      v-if="showPostDetail"
+      :post="selectedPost"
+      @close="showPostDetail = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import PostAddComponent from './PostAddComponent.vue'
+import PostDetailComponent from './PostDetailComponent.vue'
 
 // 현재 선택된 동네와 정렬 옵션
 const currentNeighborhood = ref('영등포구 여의도동')
@@ -95,14 +108,24 @@ const currentSort = ref('최신순')
 // 게시글 작성 화면 표시 여부
 const showAddPost = ref(false)
 
+// 게시글 상세 화면 표시 여부
+const showPostDetail = ref(false)
+const selectedPost = ref(null)
+
+// 게시글 선택 함수
+const selectPost = (post) => {
+  selectedPost.value = post
+  showPostDetail.value = true
+}
+
 // 게시글 데이터
 const posts = ref([
   {
-    userName: '임병배',
+    userName: '김영민',
     userImage: 'https://via.placeholder.com/50/8395e6/FFFFFF/?text=임',
-    userLocation: '영등포구 여의도동',
+    userLocation: '북구 만덕동',
     title: '안심공도',
-    content: '경기창조고 앞 금호어울림3차 아파트 살까요?',
+    content: '집에가고 싶은데 어캄?',
     category: '부동산 살까? 팔까?',
     location: '영등포구 여의도동',
     time: '5시간전',
