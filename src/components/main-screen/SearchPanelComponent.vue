@@ -10,7 +10,7 @@
           type="text"
           placeholder="단지, 지역, 지하철, 학교 검색"
           class="form-control"
-          @keyup.enter="searchKeyword"
+          @keyup.enter="firstSearch"
         />
       </div>
 
@@ -18,13 +18,6 @@
       <div class="search-tabs">
         <div class="tab" :class="{ active: activeTab === 'recent' }" @click="activeTab = 'recent'">
           최근방문
-        </div>
-        <div
-          class="tab"
-          :class="{ active: activeTab === 'address' }"
-          @click="activeTab = 'address'"
-        >
-          주소로 찾기
         </div>
       </div>
 
@@ -35,11 +28,6 @@
         <template v-if="activeTab === 'recent'">
           <h6 class="section-title">최근검색</h6>
           <p class="text-muted">최근 검색 기록이 없어요.</p>
-        </template>
-
-        <template v-else>
-          <h6 class="section-title">주소로 검색 UI 여기에</h6>
-          <!-- 향후: 시/군/구 드롭다운, 검색결과 리스트 등 -->
         </template>
       </div>
     </div>
@@ -58,9 +46,10 @@
 </template>
 
 <script setup>
-import { ref, inject, defineAsyncComponent } from 'vue'
+import { ref, inject, defineAsyncComponent, watch } from 'vue'
 import { houseApi } from '@/axios/house'
-
+import { useCommonStore } from '../store/common'
+const commonStore = useCommonStore()
 const HouesListComponent = defineAsyncComponent(() => import('./HouesListComponent.vue'))
 
 const keyword = ref('')
@@ -84,25 +73,27 @@ function handleBack() {
 
 const houseList = ref([])
 
-// 키워드 검색 함수
-// const searchKeyword = async () => {
-//   try {
-//     const response = await houseApi({
-//       url: '/search',
-//       method: 'get',
-//       params: { keyword: keyword.value, lastAptSeq: lastAptSeq.value, size: 10 },
-//     })
-//     houseList.value = response.data.data
-//     lastAptSeq.value = houseList.value.at(-1)?.aptSeq ?? null
-//   } catch (e) {
-//     alert(e)
-//   }
-//   if (keyword.value.trim()) {
-//     showSearchResults.value = true
-//   }
-// }
-
 const isLoading = ref(false)
+
+const firstSearch = async () => {
+  if (isLoading.value) return
+  isLoading.value = true
+  try {
+    const response = await houseApi({
+      url: '/search',
+      method: 'get',
+      params: { keyword: keyword.value, lastAptSeq: lastAptSeq.value, size: 10 },
+    })
+    houseList.value = response.data.data
+    lastAptSeq.value = houseList.value.at(-1)?.aptSeq ?? null
+    commonStore.rankingRefresh()
+  } finally {
+    isLoading.value = false
+  }
+  if (keyword.value.trim()) {
+    showSearchResults.value = true
+  }
+}
 
 const searchKeyword = async () => {
   if (isLoading.value) return
@@ -115,6 +106,7 @@ const searchKeyword = async () => {
     })
     houseList.value.push(...response.data.data)
     lastAptSeq.value = houseList.value.at(-1)?.aptSeq ?? null
+    commonStore.rankingRefresh()
   } finally {
     isLoading.value = false
   }

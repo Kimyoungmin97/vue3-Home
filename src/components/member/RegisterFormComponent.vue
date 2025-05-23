@@ -10,10 +10,10 @@
 
     <!-- 회원가입 폼 -->
     <div class="register-form">
-      <!-- 이메일 입력 -->
+      <!-- 아이디 입력 -->
       <div class="form-group">
-        <label>이메일</label>
-        <input type="email" class="form-control" placeholder="이메일 입력" v-model="email" />
+        <label>아이디</label>
+        <input type="text" class="form-control" placeholder="아이디 입력" v-model="user.username" />
       </div>
 
       <!-- 비밀번호 입력 -->
@@ -23,7 +23,7 @@
           type="password"
           class="form-control"
           placeholder="비밀번호 입력"
-          v-model="password"
+          v-model="user.password"
         />
       </div>
 
@@ -38,6 +38,12 @@
         />
       </div>
 
+      <!-- 이메일 입력 -->
+      <div class="form-group">
+        <label>이메일</label>
+        <input type="email" class="form-control" placeholder="이메일 입력" v-model="user.email" />
+      </div>
+
       <!-- 닉네임 입력 -->
       <div class="form-group">
         <label>닉네임</label>
@@ -46,17 +52,30 @@
             type="text"
             class="form-control"
             placeholder="닉네임 30자 이내 입력"
-            v-model="nickname"
+            v-model="user.nickname"
             maxlength="30"
           />
           <div class="nickname-counter">
-            {{ nickname.length }}/30
-            <button class="clear-button" v-if="nickname" @click="nickname = ''">
+            {{ nicknameLen }}/30
+            <button class="clear-button" v-if="user.nickname" @click="user.nickname = ''">
               <i class="bi bi-x-circle-fill"></i>
             </button>
           </div>
         </div>
         <p class="nickname-guide">언제든지 변경 가능합니다. (한글/영문/숫자2~30자, 중복 불가)</p>
+      </div>
+
+      <!-- 거주지 입력 -->
+
+      <div class="form-group">
+        <label>거주지</label>
+        <input
+          type="text"
+          class="form-control"
+          placeholder="현재 거주하고 있는 지역을 입력해주세요"
+          v-model="user.residence"
+        />
+        <p class="residence-guide">예: 서울시 강남구 **아파트 등</p>
       </div>
 
       <!-- 회원가입 버튼 -->
@@ -68,22 +87,29 @@
 <script setup>
 import { ref, computed, inject } from 'vue'
 
-const emit = defineEmits(['close'])
-
 // 폼 데이터
-const email = ref('')
-const password = ref('')
+// const email = ref('')
+// const password = ref('')
 const passwordConfirm = ref('')
-const nickname = ref('')
+// const nickname = ref('')
+const user = ref({})
+
+const nicknameLen = computed(() =>
+  user.value.nickname?.length > 0 ? user.value.nickname.length : 0,
+)
 
 // 폼 유효성 검사
 const isFormValid = computed(() => {
-  return (
-    email.value.trim() !== '' &&
-    password.value.trim() !== '' &&
-    password.value === passwordConfirm.value &&
-    nickname.value.length >= 2
-  )
+  if (user.value !== null) {
+    return (
+      user.value.username?.trim() !== '' &&
+      user.value.password?.trim() !== '' &&
+      user.value.password === passwordConfirm.value &&
+      user.value.nickname?.length >= 2
+    )
+  } else {
+    return false
+  }
 })
 
 const showRegister = inject('showRegister')
@@ -97,17 +123,8 @@ const register = () => {
   if (!isFormValid.value) return
 
   // 회원가입 로직 구현 (API 호출 등)
-  console.log('회원가입 시도:', {
-    email: email.value,
-    password: password.value,
-    nickname: nickname.value,
-  })
+  console.log(user.value)
 
-  // 회원가입 성공 후 처리
-  // ...
-
-  // 로그인 화면으로 돌아가기
-  //   emit('close')
   showRegister.value = !showRegister.value
 }
 </script>

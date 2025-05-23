@@ -11,7 +11,9 @@
             @mouseenter="handleMouseEnter"
             @mouseleave="handleMouseLeave"
           >
-            {{ currentRanking.rank }}. {{ currentRanking.location }}
+            <div v-if="currentRanking">
+              {{ currentRanking.rank }}. {{ currentRanking.location }}
+            </div>
 
             <!-- Rankings dropdown -->
             <div class="rankings-dropdown" v-if="showAllRankings">
@@ -37,7 +39,9 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
-
+import { useCommonStore } from './store/common'
+const commonStore = useCommonStore()
+commonStore.rankingRefresh()
 // Props
 const props = defineProps({
   location: {
@@ -52,18 +56,25 @@ const completeAction = () => {
 }
 
 // 검색어 순위 데이터
-const rankings = ref([
-  { rank: 1, location: '더샵센트럴파크2차' },
-  { rank: 2, location: '판교역 푸르지오' },
-  { rank: 3, location: '광교 SK뷰' },
-  { rank: 4, location: '동탄 메타폴리스' },
-  { rank: 5, location: '해운대 엘시티' },
-  { rank: 6, location: '송도 트리플스트리트' },
-  { rank: 7, location: '강남 래미안' },
-  { rank: 8, location: '용산 파크타워' },
-  { rank: 9, location: '분당 서현동' },
-  { rank: 10, location: '일산 백석동' },
-])
+const rankings = computed(() =>
+  commonStore.rankings.map((value, index) => ({
+    rank: index + 1,
+    location: value,
+  })),
+)
+
+// const rankings = ref([
+//   { rank: 1, location: '더샵센트럴파크2차' },
+//   { rank: 2, location: '판교역 푸르지오' },
+//   { rank: 3, location: '광교 SK뷰' },
+//   { rank: 4, location: '동탄 메타폴리스' },
+//   { rank: 5, location: '해운대 엘시티' },
+//   { rank: 6, location: '송도 트리플스트리트' },
+//   { rank: 7, location: '강남 래미안' },
+//   { rank: 8, location: '용산 파크타워' },
+//   { rank: 9, location: '분당 서현동' },
+//   { rank: 10, location: '일산 백석동' },
+// ])
 
 // 현재 표시 중인 순위 인덱스
 const currentRankingIndex = ref(0)

@@ -40,6 +40,8 @@
 
 <script setup>
 import { markRaw, defineAsyncComponent, inject, ref, watch } from 'vue'
+import { useUserStore } from './store/user.js'
+const userStore = useUserStore()
 
 // 컴포넌트 동적 로드
 const HomeContent = markRaw(defineAsyncComponent(() => import('./content/HomeContent.vue')))
@@ -56,7 +58,9 @@ const PostListComponent = markRaw(
 const LoginFormComponent = markRaw(
   defineAsyncComponent(() => import('@/components/member/LoginFormComponent.vue')),
 )
-
+const NoticeComponent = markRaw(
+  defineAsyncComponent(() => import('@/components/post/NoticeComponent.vue')),
+)
 // 지도 컴포넌트
 import MapView from './MapView.vue'
 
@@ -80,14 +84,12 @@ const selectedProperty = ref(null)
 // 메인 컴포넌트 결정
 const getMainComponent = () => {
   switch (props.activeMenu) {
-    case 'login':
-      return LoginFormComponent
     case 'home':
-      return HomeContent
+      return NoticeComponent
     case 'search':
       return SearchPanelComponent
-    case 'map':
-      return MapContent
+    case 'profile':
+      return userStore.isLoggedIn ? null : LoginFormComponent
     case 'community':
       return PostListComponent
     default:

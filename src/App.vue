@@ -34,7 +34,7 @@ const loadKakaoMapsScript = () => {
 }
 
 // 상태 관리
-const activeMenu = ref('login') // 기본값을 'login'으로 변경
+const activeMenu = ref('home') // 기본값을 'home'으로 변경
 const showAuxiliary = ref(false)
 const currentLocation = ref('더샵센트럴파크2차')
 

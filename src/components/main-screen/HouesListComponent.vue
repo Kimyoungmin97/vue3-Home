@@ -49,9 +49,6 @@
             <i class="bi bi-geo-alt-fill text-danger"></i> {{ property.address }}
           </div>
         </div>
-        <div class="property-image">
-          <img :src="property.image" alt="매물 이미지" />
-        </div>
       </div>
     </div>
   </div>
@@ -79,12 +76,12 @@ const emit = defineEmits(['back', 'select-property'])
 
 // 정렬 옵션
 const sortOptions = [
-  { label: '최신순', value: 'latest' },
+  { label: '기본순', value: 'latest' },
   { label: '가격 낮은순', value: 'price_asc' },
   { label: '가격 높은순', value: 'price_desc' },
 ]
 
-const currentSort = ref('최신순')
+const currentSort = ref('기본순')
 const currentSortVal = ref('latest')
 const showSortOptions = ref(false)
 
