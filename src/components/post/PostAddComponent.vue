@@ -6,9 +6,13 @@
         <button class="back-button" @click="goBack">
           <i class="bi bi-chevron-left"></i>
         </button>
-        <div class="location-dropdown">영등포구 여의도동 <i class="bi bi-chevron-down"></i></div>
+        <div class="location-dropdown">
+          {{ userStore.loginUser.residence }} <i class="bi bi-chevron-down"></i>
+        </div>
       </div>
-      <button class="submit-button" :disabled="!isValid" @click="submitPost">등록</button>
+      <button class="submit-button" :disabled="!isValid" @click="submitPost">
+        {{ isEditMode ? '수정' : '등록' }}
+      </button>
     </div>
 
     <!-- 게시글 작성 폼 -->
@@ -38,12 +42,29 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-
+import { userApi } from '@/axios/user'
+import { useUserStore } from '@/components/store/user'
+// 현재 선택된 동네와 정렬 옵션
+const userStore = useUserStore()
 const emit = defineEmits(['close'])
 
+const props = defineProps({
+  addSearch: {
+    type: Function,
+    default: null,
+  },
+  editPost: {
+    type: Object,
+    default: null,
+  },
+})
+
 // 게시글 제목과 내용
-const postTitle = ref('')
-const postContent = ref('')
+const postTitle = ref(props.editPost?.title || '')
+const postContent = ref(props.editPost?.content || '')
+const isSecret = ref(0)
+
+const isEditMode = computed(() => !!props.editPost)
 
 // 유효성 검사
 const isValid = computed(() => {
@@ -56,20 +77,39 @@ const goBack = () => {
 }
 
 // 게시글 등록
-const submitPost = () => {
+const submitPost = async () => {
   if (!isValid.value) return
-
-  // 게시글 데이터 생성
-  const newPost = {
+  console.log({
     title: postTitle.value,
     content: postContent.value,
-    date: new Date().toISOString(),
+    isSecret: isSecret.value,
+    aptSeq: userStore.loginUser.aptSeq,
+  })
+  if (isEditMode.value) {
+    await userApi({
+      url: `/api/boards/${props.editPost.postId}`,
+      method: 'put',
+      data: {
+        title: postTitle.value,
+        content: postContent.value,
+        isSecret: isSecret.value,
+        aptSeq: userStore.loginUser.aptSeq,
+      },
+    })
+  } else {
+    await userApi({
+      url: '/api/boards',
+      method: 'post',
+      data: {
+        title: postTitle.value,
+        content: postContent.value,
+        isSecret: isSecret.value,
+        aptSeq: userStore.loginUser.aptSeq,
+      },
+    })
   }
 
-  // 여기서 게시글 등록 로직 구현 (API 호출 등)
-  console.log('게시글 등록:', newPost)
-
-  // 등록 후 목록으로 돌아가기
+  props.addSearch()
   emit('close')
 }
 </script>

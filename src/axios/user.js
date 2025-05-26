@@ -10,6 +10,11 @@ userApi.interceptors.request.use(
   async (config) => {
     console.log('[요청 발신]: ', config.method, config.url, config.data)
     const userStore = useUserStore()
+
+    if (userStore.tokenStatus === 'access token 만료') {
+      await userStore.refresh()
+    }
+
     if (userStore.tokens?.accessToken) {
       config.headers['Authorization'] = `Bearer ${userStore.tokens.accessToken}`
     }

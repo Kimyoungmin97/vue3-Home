@@ -20,7 +20,7 @@
           </div>
           <div class="author-details">
             <div class="author-name">{{ postInfo.name || '내집가' }}</div>
-            <div class="author-location">{{ post.userLocation || '영등포구 여의도동' }}</div>
+            <div class="author-location">{{ postInfo.aptNm || '영등포구 여의도동' }}</div>
           </div>
         </div>
       </div>
@@ -44,12 +44,19 @@
 
       <!-- 게시글 액션 -->
       <div class="post-actions">
-        <!-- <button class="action-button">
-          <i class="bi bi-hand-thumbs-up"></i> 좋아요 {{ post.likeCount || '1' }}
-        </button> -->
         <button class="action-button">
-          <i class="bi bi-chat"></i> 댓글 {{ post.commentCnt || '0' }}
+          <i class="bi bi-chat"></i> 댓글 {{ postInfo.comments.length || '0' }}
         </button>
+
+        <!-- 작성자에게만 보이는 수정/삭제 -->
+        <template v-if="isAuthor">
+          <button class="action-button text-primary" @click="editPost">
+            <i class="bi bi-pencil-square"></i> 수정
+          </button>
+          <button class="action-button text-danger" @click="deletePost">
+            <i class="bi bi-trash"></i> 삭제
+          </button>
+        </template>
       </div>
     </div>
 
@@ -62,24 +69,9 @@
         <button class="sort-option">최신순</button>
       </div>
 
-      <!-- 댓글 목록 -->
-      <!-- <div class="comments-list" v-if="postInfo.comments && postInfo.comments.length > 0">
-        <div class="comment-item" v-for="(comment, index) in postInfo.comments" :key="index">
-          <div class="comment-author">
-            <div class="comment-author-details">
-              <div class="comment-author-name">{{ comment.name }}</div>
-              <div class="comment-time">{{ comment.createdAt }}</div>
-            </div>
-          </div>
-          <div class="comment-content">
-            {{ comment.content }}
-          </div>
-        </div>
-      </div> -->
-      <!-- 댓글 목록 -->
       <div class="comments-list" v-if="postInfo.comments && postInfo.comments.length > 0">
         <template v-for="(comment, index) in rootComments" :key="comment.commentId">
-          <div class="comment-item">
+          <div class="comment-item" v-if="comment.commentId != 0">
             <div class="comment-author">
               <div class="comment-author-details">
                 <div class="comment-author-name">{{ comment.name }}</div>
@@ -141,13 +133,44 @@
 
 <script setup>
 import { ref, computed, defineProps, defineEmits } from 'vue'
-import { userApiNoAuth, userApi } from '@/axios/user'
+import { userApi } from '@/axios/user'
 const props = defineProps({
   post: {
     type: Object,
     default: () => ({}),
   },
 })
+
+import { useUserStore } from '@/components/store/user'
+const userStore = useUserStore()
+
+// 작성자 여부 확인
+const isAuthor = computed(() => {
+  return userStore.loginUser.username === postInfo.value.username
+})
+
+// 수정 요청 (부모 컴포넌트가 처리)
+const editPost = () => {
+  emit('edit', postInfo.value)
+}
+
+// 삭제 요청
+const deletePost = async () => {
+  if (!confirm('정말 삭제하시겠습니까?')) return
+
+  try {
+    await userApi({
+      url: `/api/boards/${props.post.postId}`,
+      method: 'delete',
+    })
+    alert('삭제되었습니다.')
+    emit('deleted')
+    goBack()
+  } catch (e) {
+    console.error(e)
+    alert('삭제에 실패했습니다.')
+  }
+}
 
 const emit = defineEmits(['close'])
 
@@ -158,7 +181,7 @@ const goBack = () => {
 const postInfo = ref({})
 const postDetail = async () => {
   try {
-    const response = await userApiNoAuth({
+    const response = await userApi({
       url: `/api/boards/${props.post.postId}/detail`,
       method: 'get',
     })
@@ -201,20 +224,20 @@ const submitComment = async () => {
   }
 }
 
-const submitReply = (parentId) => {
+const submitReply = async (parentId) => {
   const content = replyContent.value[parentId]
   if (!content?.trim()) return
 
-  postInfo.value.comments.push({
-    commentId: Date.now(),
-    content,
-    commentContent: content,
-    name: '나',
-    createdAt: new Date().toISOString(),
-    parentId,
-    depth: 1,
-    userId: 0,
-  })
+  try {
+    await userApi({
+      url: `/api/boards/${props.post.postId}`,
+      method: 'post',
+      params: { parentId: parentId, content: content },
+    })
+    postDetail()
+  } catch (e) {
+    console.log(e)
+  }
 
   replyContent.value[parentId] = ''
   replyFormVisible.value[parentId] = false

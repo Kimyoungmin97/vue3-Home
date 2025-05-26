@@ -81,13 +81,20 @@
       </button>
     </div>
     <!-- 게시글 작성 화면 -->
-    <PostAddComponent v-if="showAddPost" @close="showAddPost = false" />
+    <PostAddComponent
+      v-if="showAddPost"
+      @close="closeAddPost"
+      :addSearch="firstSearchPost"
+      :editPost="editingPost"
+    />
 
     <!-- 게시글 상세 화면 -->
     <PostDetailComponent
       v-if="showPostDetail"
       :post="selectedPost"
       @close="showPostDetail = false"
+      @edit="goToEditPage"
+      @deleted="firstSearchPost"
     />
   </div>
 </template>
@@ -117,7 +124,7 @@ const selectPost = (post) => {
 }
 
 const posts = ref([])
-const lastAptSeq = ref('')
+const lastPostId = ref(0)
 const isLoading = ref(false)
 
 const firstSearchPost = async () => {
@@ -125,10 +132,10 @@ const firstSearchPost = async () => {
     const response = await userApiNoAuth({
       url: '/api/boards',
       method: 'get',
-      params: { aptSeq: userStore.loginUser.aptSeq, lastAptSeq: lastAptSeq.value },
+      params: { aptSeq: userStore.loginUser.aptSeq, lastPostId: lastPostId.value },
     })
     posts.value = response.data.data
-    lastAptSeq.value = posts.value.at(-1)?.aptSeq ?? null
+    lastPostId.value = posts.value.at(-1)?.postId ?? null
   } finally {
     isLoading.value = false
   }
@@ -141,10 +148,10 @@ const searchPost = async () => {
     const response = await userApiNoAuth({
       url: '/api/boards',
       method: 'get',
-      params: { aptSeq: userStore.loginUser.aptSeq, lastAptSeq: lastAptSeq.value },
+      params: { aptSeq: userStore.loginUser.aptSeq, lastPostId: lastPostId.value },
     })
     posts.value.push(...response.data.data)
-    lastAptSeq.value = posts.value.at(-1)?.aptSeq ?? null
+    lastPostId.value = posts.value.at(-1)?.postId ?? null
   } finally {
     isLoading.value = false
   }
@@ -172,49 +179,22 @@ onBeforeUnmount(() => {
   listContainer.value?.removeEventListener('scroll', handleScroll)
 })
 
-// 게시글 데이터
-// const posts = ref([
-//   {
-//     userName: '김영민',
-//     userImage: 'https://via.placeholder.com/50/8395e6/FFFFFF/?text=임',
-//     userLocation: '북구 만덕동',
-//     title: '안심공도',
-//     content: '집에가고 싶은데 어캄?',
-//     location: '영등포구 여의도동',
-//     time: '5시간전',
-//     likeCount: '1',
-//     commentCount: '1',
-//   },
-//   {
-//     userName: '임병배',
-//     userImage: 'https://via.placeholder.com/50/8395e6/FFFFFF/?text=임',
-//     userLocation: '영등포구 여의도동',
-//     title: '안심공도',
-//     content: '경기창조고 앞 금호어울림3차 아파트 살까요?',
-//     category: '부동산 살까? 팔까?',
-//     location: '영등포구 여의도동',
-//     time: '5시간전',
-//     likeCount: '1',
-//     commentCount: '1',
-//   },
-//   {
-//     userName: '임병배',
-//     userImage: 'https://via.placeholder.com/50/8395e6/FFFFFF/?text=임',
-//     userLocation: '영등포구 여의도동',
-//     title: '안심공도',
-//     content: '경기창조고 앞 금호어울림3차 아파트 살까요?',
-//     category: '부동산 살까? 팔까?',
-//     location: '영등포구 여의도동',
-//     time: '5시간전',
-//     likeCount: '1',
-//     commentCount: '1',
-//   },
-// ])
+const editingPost = ref(null)
+const goToEditPage = (post) => {
+  editingPost.value = post
+  showPostDetail.value = false
+  showAddPost.value = true
+}
+
+const closeAddPost = () => {
+  showAddPost.value = false
+  editingPost.value = null
+}
 </script>
 
 <style scoped>
 .post-container {
-  height: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: #fff;
@@ -305,8 +285,10 @@ onBeforeUnmount(() => {
 }
 
 .post-list {
+  height: 80vh;
   flex: 1;
   overflow-y: auto;
+  padding: 8px;
 }
 
 .post-item {

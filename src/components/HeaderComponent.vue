@@ -62,8 +62,9 @@ const logoutAct = async () => {
   try {
     await userStore.logout()
   } catch (e) {
-    console.log(e)
-    alert(e?.response?.data?.message)
+    console.error(e)
+    userStore.$reset()
+    alert('이미 로그아웃되었거나 세션이 만료되었습니다.')
   }
 }
 

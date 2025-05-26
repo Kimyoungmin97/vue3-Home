@@ -28,8 +28,8 @@ export const useUserStore = defineStore(
           name: decoded.name,
           username: decoded.username,
           role: decoded.role,
-          aptSeq: decoded.aptSeq,
-          residence: decoded.residence,
+          aptSeq: decoded.aptSeq ? decoded.aptSeq : null,
+          residence: decoded.residence ? decoded.residence : null,
         }
       } catch (e) {
         throw 'id/pass 확인' + e.name
@@ -72,8 +72,8 @@ export const useUserStore = defineStore(
           name: decoded.name,
           username: decoded.username,
           role: decoded.role,
-          aptSeq: decoded.aptSeq,
-          residence: decoded.residence,
+          aptSeq: decoded.aptSeq ? decoded.aptSeq : null,
+          residence: decoded.residence ? decoded.residence : null,
         }
       } catch (e) {
         console.log(e)
