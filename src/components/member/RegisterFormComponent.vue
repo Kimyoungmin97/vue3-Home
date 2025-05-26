@@ -16,6 +16,12 @@
         <input type="text" class="form-control" placeholder="아이디 입력" v-model="user.username" />
       </div>
 
+      <!-- 이름 입력 -->
+      <div class="form-group">
+        <label>이름</label>
+        <input type="text" class="form-control" placeholder="이름 입력" v-model="user.name" />
+      </div>
+
       <!-- 비밀번호 입력 -->
       <div class="form-group">
         <label>비밀번호</label>
@@ -44,7 +50,7 @@
         <input type="email" class="form-control" placeholder="이메일 입력" v-model="user.email" />
       </div>
 
-      <!-- 닉네임 입력 -->
+      <!-- 닉네임 입력
       <div class="form-group">
         <label>닉네임</label>
         <div class="nickname-input-container">
@@ -63,10 +69,9 @@
           </div>
         </div>
         <p class="nickname-guide">언제든지 변경 가능합니다. (한글/영문/숫자2~30자, 중복 불가)</p>
-      </div>
+      </div> -->
 
       <!-- 거주지 입력 -->
-
       <div class="form-group">
         <label>거주지</label>
         <input
@@ -75,7 +80,7 @@
           placeholder="현재 거주하고 있는 지역을 입력해주세요"
           v-model="user.residence"
         />
-        <p class="residence-guide">예: 서울시 강남구 **아파트 등</p>
+        <p class="residence-guide">예: 서울특별시 강남구 **아파트 등</p>
       </div>
 
       <!-- 회원가입 버튼 -->
@@ -86,17 +91,15 @@
 
 <script setup>
 import { ref, computed, inject } from 'vue'
+import { userApiNoAuth } from '@/axios/user'
 
 // 폼 데이터
-// const email = ref('')
-// const password = ref('')
 const passwordConfirm = ref('')
-// const nickname = ref('')
 const user = ref({})
 
-const nicknameLen = computed(() =>
-  user.value.nickname?.length > 0 ? user.value.nickname.length : 0,
-)
+// const nicknameLen = computed(() =>
+//   user.value.nickname?.length > 0 ? user.value.nickname.length : 0,
+// )
 
 // 폼 유효성 검사
 const isFormValid = computed(() => {
@@ -104,8 +107,7 @@ const isFormValid = computed(() => {
     return (
       user.value.username?.trim() !== '' &&
       user.value.password?.trim() !== '' &&
-      user.value.password === passwordConfirm.value &&
-      user.value.nickname?.length >= 2
+      user.value.password === passwordConfirm.value
     )
   } else {
     return false
@@ -119,12 +121,17 @@ const goBack = () => {
 }
 
 // 회원가입 처리
-const register = () => {
+const register = async () => {
   if (!isFormValid.value) return
 
   // 회원가입 로직 구현 (API 호출 등)
   console.log(user.value)
-
+  const response = await userApiNoAuth({
+    url: '/api/user',
+    method: 'post',
+    data: user.value,
+  })
+  console.log(response)
   showRegister.value = !showRegister.value
 }
 </script>

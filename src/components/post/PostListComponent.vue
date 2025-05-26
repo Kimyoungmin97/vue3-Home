@@ -16,13 +16,13 @@
       </div>
 
       <!-- 동네 선택기 -->
-      <div class="neighborhood-selector">
+      <!-- <div class="neighborhood-selector">
         <div class="selected-neighborhood">
           <span class="neighborhood-label">관심동네</span>
           <span class="neighborhood-name">{{ currentNeighborhood }}</span>
           <i class="bi bi-chevron-down"></i>
         </div>
-      </div>
+      </div> -->
 
       <!-- 동네 표시 -->
       <div class="neighborhood-display">
@@ -35,10 +35,10 @@
       </div>
 
       <!-- 게시글 목록 -->
-      <div class="post-list" v-if="!showAddPost">
+      <div class="post-list" v-if="!showAddPost" ref="listContainer">
         <div
           v-for="(post, index) in posts"
-          :key="index"
+          :key="post.postId"
           class="post-item"
           @click="selectPost(post)"
         >
@@ -49,8 +49,8 @@
                 <img :src="post.userImage" alt="프로필 이미지" />
               </div>
               <div class="user-details">
-                <div class="username">{{ post.userName }}</div>
-                <div class="user-location">{{ post.userLocation }}</div>
+                <div class="username">{{ post.name }}</div>
+                <div class="user-location">{{ currentNeighborhood }}</div>
               </div>
             </div>
           </div>
@@ -60,18 +60,14 @@
             <h3 class="post-title">{{ post.title }}</h3>
             <p class="post-text">{{ post.content }}</p>
             <div class="post-meta">
-              <span class="post-category">{{ post.category }} · {{ post.location }}</span>
-              <span class="post-time">{{ post.time }}</span>
+              <span class="post-category">{{ currentNeighborhood }}</span>
             </div>
           </div>
 
           <!-- 게시글 액션 -->
           <div class="post-actions">
             <button class="action-button">
-              <i class="bi bi-hand-thumbs-up"></i> 좋아요 {{ post.likeCount }}
-            </button>
-            <button class="action-button">
-              <i class="bi bi-chat"></i> 댓글 {{ post.commentCount }}
+              <i class="bi bi-chat"></i> 댓글 {{ post.commentCnt }}
             </button>
           </div>
 
@@ -97,12 +93,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, useTemplateRef } from 'vue'
 import PostAddComponent from './PostAddComponent.vue'
 import PostDetailComponent from './PostDetailComponent.vue'
-
+import { userApiNoAuth } from '@/axios/user'
+import { useUserStore } from '@/components/store/user'
 // 현재 선택된 동네와 정렬 옵션
-const currentNeighborhood = ref('영등포구 여의도동')
+const userStore = useUserStore()
+const currentNeighborhood = userStore.loginUser.residence
 const currentSort = ref('최신순')
 
 // 게시글 작성 화면 표시 여부
@@ -118,45 +116,100 @@ const selectPost = (post) => {
   showPostDetail.value = true
 }
 
+const posts = ref([])
+const lastAptSeq = ref('')
+const isLoading = ref(false)
+
+const firstSearchPost = async () => {
+  try {
+    const response = await userApiNoAuth({
+      url: '/api/boards',
+      method: 'get',
+      params: { aptSeq: userStore.loginUser.aptSeq, lastAptSeq: lastAptSeq.value },
+    })
+    posts.value = response.data.data
+    lastAptSeq.value = posts.value.at(-1)?.aptSeq ?? null
+  } finally {
+    isLoading.value = false
+  }
+}
+
+firstSearchPost()
+
+const searchPost = async () => {
+  try {
+    const response = await userApiNoAuth({
+      url: '/api/boards',
+      method: 'get',
+      params: { aptSeq: userStore.loginUser.aptSeq, lastAptSeq: lastAptSeq.value },
+    })
+    posts.value.push(...response.data.data)
+    lastAptSeq.value = posts.value.at(-1)?.aptSeq ?? null
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const listContainer = useTemplateRef('listContainer')
+
+function handleScroll() {
+  const el = listContainer.value
+  if (!el) return
+
+  const scrollBottom = el.scrollTop + el.clientHeight
+  const scrollHeight = el.scrollHeight
+
+  if (scrollBottom >= scrollHeight - 10) {
+    searchPost()
+  }
+}
+
+onMounted(() => {
+  listContainer.value?.addEventListener('scroll', handleScroll)
+})
+
+onBeforeUnmount(() => {
+  listContainer.value?.removeEventListener('scroll', handleScroll)
+})
+
 // 게시글 데이터
-const posts = ref([
-  {
-    userName: '김영민',
-    userImage: 'https://via.placeholder.com/50/8395e6/FFFFFF/?text=임',
-    userLocation: '북구 만덕동',
-    title: '안심공도',
-    content: '집에가고 싶은데 어캄?',
-    category: '부동산 살까? 팔까?',
-    location: '영등포구 여의도동',
-    time: '5시간전',
-    likeCount: '1',
-    commentCount: '1',
-  },
-  {
-    userName: '임병배',
-    userImage: 'https://via.placeholder.com/50/8395e6/FFFFFF/?text=임',
-    userLocation: '영등포구 여의도동',
-    title: '안심공도',
-    content: '경기창조고 앞 금호어울림3차 아파트 살까요?',
-    category: '부동산 살까? 팔까?',
-    location: '영등포구 여의도동',
-    time: '5시간전',
-    likeCount: '1',
-    commentCount: '1',
-  },
-  {
-    userName: '임병배',
-    userImage: 'https://via.placeholder.com/50/8395e6/FFFFFF/?text=임',
-    userLocation: '영등포구 여의도동',
-    title: '안심공도',
-    content: '경기창조고 앞 금호어울림3차 아파트 살까요?',
-    category: '부동산 살까? 팔까?',
-    location: '영등포구 여의도동',
-    time: '5시간전',
-    likeCount: '1',
-    commentCount: '1',
-  },
-])
+// const posts = ref([
+//   {
+//     userName: '김영민',
+//     userImage: 'https://via.placeholder.com/50/8395e6/FFFFFF/?text=임',
+//     userLocation: '북구 만덕동',
+//     title: '안심공도',
+//     content: '집에가고 싶은데 어캄?',
+//     location: '영등포구 여의도동',
+//     time: '5시간전',
+//     likeCount: '1',
+//     commentCount: '1',
+//   },
+//   {
+//     userName: '임병배',
+//     userImage: 'https://via.placeholder.com/50/8395e6/FFFFFF/?text=임',
+//     userLocation: '영등포구 여의도동',
+//     title: '안심공도',
+//     content: '경기창조고 앞 금호어울림3차 아파트 살까요?',
+//     category: '부동산 살까? 팔까?',
+//     location: '영등포구 여의도동',
+//     time: '5시간전',
+//     likeCount: '1',
+//     commentCount: '1',
+//   },
+//   {
+//     userName: '임병배',
+//     userImage: 'https://via.placeholder.com/50/8395e6/FFFFFF/?text=임',
+//     userLocation: '영등포구 여의도동',
+//     title: '안심공도',
+//     content: '경기창조고 앞 금호어울림3차 아파트 살까요?',
+//     category: '부동산 살까? 팔까?',
+//     location: '영등포구 여의도동',
+//     time: '5시간전',
+//     likeCount: '1',
+//     commentCount: '1',
+//   },
+// ])
 </script>
 
 <style scoped>
@@ -349,10 +402,10 @@ const posts = ref([
 }
 
 .write-button {
-  position: sticky;
+  position: fixed;
   bottom: 24px;
   /* right: 24px; */
-  left: 275px;
+  left: 335px;
   width: 56px;
   height: 56px;
   border-radius: 50%;

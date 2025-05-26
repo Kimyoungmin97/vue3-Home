@@ -31,7 +31,13 @@
             </div>
           </div>
         </div>
-        <button class="btn btn-sm btn-outline-primary" @click="completeAction">알림</button>
+        <button
+          class="btn btn-sm btn-outline-primary"
+          v-if="userStore.isLoggedIn"
+          @click="logoutAct"
+        >
+          로그아웃
+        </button>
       </div>
     </div>
   </header>
@@ -49,10 +55,16 @@ const props = defineProps({
     default: '위치 정보 없음',
   },
 })
-
+import { useUserStore } from '@/components/store/user'
+const userStore = useUserStore()
 // 완료 버튼 액션
-const completeAction = () => {
-  alert('작업이 완료되었습니다.')
+const logoutAct = async () => {
+  try {
+    await userStore.logout()
+  } catch (e) {
+    console.log(e)
+    alert(e?.response?.data?.message)
+  }
 }
 
 // 검색어 순위 데이터

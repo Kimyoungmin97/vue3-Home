@@ -24,7 +24,13 @@ export const useUserStore = defineStore(
         _tokens.value = response.data
         _isLoggedIn.value = true
         const decoded = jwtDecode(_tokens.value.accessToken)
-        _loginUser.value = { name: decoded.name, username: decoded.username, role: decoded.role }
+        _loginUser.value = {
+          name: decoded.name,
+          username: decoded.username,
+          role: decoded.role,
+          aptSeq: decoded.aptSeq,
+          residence: decoded.residence,
+        }
       } catch (e) {
         throw 'id/pass 확인' + e.name
       }
@@ -37,7 +43,7 @@ export const useUserStore = defineStore(
           url: '/api/auth/logout',
           method: 'post',
           headers: {
-            'Rfresh-Token': _tokens.value.refreshToken,
+            'Refresh-Token': _tokens.value.refreshToken,
           },
         })
       } finally {
@@ -56,13 +62,19 @@ export const useUserStore = defineStore(
           url: '/api/auth/refresh',
           method: 'post',
           headers: {
-            'Rfresh-Token': _tokens.value.refreshToken,
+            'Refresh-Token': _tokens.value.refreshToken,
           },
         })
         _tokens.value = response.data
         _isLoggedIn.value = true
         const decoded = jwtDecode(_tokens.value.accessToken)
-        _loginUser.value = { name: decoded.name, username: decoded.username, role: decoded.role }
+        _loginUser.value = {
+          name: decoded.name,
+          username: decoded.username,
+          role: decoded.role,
+          aptSeq: decoded.aptSeq,
+          residence: decoded.residence,
+        }
       } catch (e) {
         console.log(e)
       }

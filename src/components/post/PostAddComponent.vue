@@ -27,11 +27,11 @@
       ></textarea>
 
       <!-- 이미지 업로드 버튼 -->
-      <div class="image-upload-section">
+      <!-- <div class="image-upload-section">
         <button class="image-upload-button">
           <i class="bi bi-image"></i>
         </button>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>

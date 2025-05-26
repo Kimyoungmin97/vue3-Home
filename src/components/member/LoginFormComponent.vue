@@ -54,7 +54,8 @@
 <script setup>
 import { ref, computed, inject, provide } from 'vue'
 import RegisterFormComponent from './RegisterFormComponent.vue'
-
+import { useUserStore } from '@/components/store/user'
+const userStore = useUserStore()
 const emit = defineEmits(['close'])
 
 // 폼 데이터
@@ -76,11 +77,17 @@ const goBack = () => {
 provide('showRegister', showRegister)
 
 // 로그인 처리
-const login = () => {
+const login = async () => {
   if (!isFormValid.value) return
 
   // 로그인 로직 구현 (API 호출 등)
   console.log('로그인 시도:', { username: username.value, password: password.value })
+  try {
+    await userStore.login({ username: username.value, password: password.value })
+  } catch (e) {
+    console.log(e)
+    alert(e?.response?.data?.message)
+  }
 
   // 로그인 성공 후 처리
   // ...

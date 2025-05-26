@@ -91,7 +91,7 @@ const getMainComponent = () => {
     case 'profile':
       return userStore.isLoggedIn ? null : LoginFormComponent
     case 'community':
-      return PostListComponent
+      return userStore.isLoggedIn ? PostListComponent : LoginFormComponent
     default:
       return HomeContent
   }
