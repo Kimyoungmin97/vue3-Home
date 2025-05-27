@@ -13,10 +13,7 @@
       <div class="author-info">
         <div class="author-profile">
           <div class="profile-image">
-            <img
-              :src="post.userImage || 'https://via.placeholder.com/50/5ebaa5/FFFFFF/?text=내'"
-              alt="프로필 이미지"
-            />
+            <img src="/base.jpg" alt="프로필 이미지" />
           </div>
           <div class="author-details">
             <div class="author-name">{{ postInfo.name || '내집가' }}</div>

@@ -59,103 +59,203 @@
               </div>
             </div>
           </div>
+          <!-- AI 분석 결과 텍스트 박스 -->
+          <div class="ai-summary-box" v-if="aiResultText">
+            <h4 class="summary-title">📈 AI 분석 요약</h4>
+            <p class="summary-text" v-html="aiResultText.replaceAll('\n', '<br />')"></p>
+          </div>
         </div>
       </div>
 
       <!-- 두 번째 화면: 주변 교통 정보 -->
-      <!-- <div class="detail-section">
+      <div class="detail-section">
         <div class="section-header">
-          <h3>주변 대중교통</h3>
-          <p class="section-subtitle">지하철 1km, 광역버스 500m 이내</p>
+          <h3>🚐 대중교통</h3>
+          <p class="section-subtitle">반경 1km 이내</p>
         </div>
-
-        <p class="section-description">이 단지에서 출/퇴근 지역까지의 시간을 비교해보세요.</p>
-
-        <div class="transport-options">
-          <div
-            class="transport-option"
-            v-for="(option, index) in property.transport.commute.options"
-            :key="index"
-          >
-            <div class="option-label">{{ option.destination }}</div>
-            <div class="option-value">{{ option.time }}</div>
-          </div>
-        </div>
-
+        <p class="section-description">이 단지에서 가까운 지하철역이에요.</p>
         <div class="transport-section">
-          <div class="transport-type">
-            <i class="bi bi-train-front"></i> 지하철 {{ property.transport.subway.length }}
-          </div>
+          <div class="transport-type">🚊 지하철 {{ subwayList.length }}</div>
 
-          <div
-            class="transport-item"
-            v-for="(subway, index) in property.transport.subway"
-            :key="index"
-          >
+          <div class="transport-item" v-for="(subway, index) in subwayList" :key="index">
             <div class="line-badge" :class="subway.color">{{ subway.line }}</div>
-            <div class="station-name">{{ subway.name }}</div>
-            <div class="distance">{{ subway.distance }}/도보 {{ subway.time }}</div>
+            <div class="station-name">{{ subway.place_name }}</div>
+            <div class="distance">{{ subway.distance }}m</div>
           </div>
+          <p v-if="subwayList.length === 0" class="text-muted">조회된 지하철역이 없습니다.</p>
         </div>
+      </div>
 
-        <div class="transport-section">
-          <div class="transport-type">
-            <i class="bi bi-bus-front"></i> 버스 {{ property.transport.bus.lines.length }}
-          </div>
-
-          <div class="bus-types">
-            <div
-              class="bus-type"
-              v-for="(type, index) in property.transport.bus.types"
-              :key="index"
-              :class="type.color"
-            >
-              {{ type.name }}
-            </div>
-          </div>
-
-          <div class="bus-numbers">
-            <div
-              class="bus-number"
-              v-for="(line, index) in property.transport.bus.lines"
-              :key="index"
-            >
-              {{ line }}
-            </div>
-          </div>
-        </div>
-      </div> -->
-
-      <!-- 세 번째 화면: 주변 어린이집 정보 -->
-      <!-- <div class="detail-section">
+      <!-- 세 번째 화면: 학군 정보 (탭) -->
+      <div class="detail-section">
+        <!-- 1) section-header: 오직 제목과 탭만 -->
         <div class="section-header">
+          <h3>🏫 학군</h3>
+          <!-- <p class="section-description">이 단지에서 가까운 지하철역이에요.</p> -->
           <div class="tab-header">
-            <div class="tab active">어린이집</div>
-            <div class="tab">유치원</div>
+            <div
+              class="tab"
+              :class="{ active: schoolTab === 'nursery' }"
+              @click="schoolTab = 'nursery'"
+            >
+              어린이집
+            </div>
+            <div
+              class="tab"
+              :class="{ active: schoolTab === 'school' }"
+              @click="schoolTab = 'school'"
+            >
+              학교
+            </div>
+            <div
+              class="tab"
+              :class="{ active: schoolTab === 'academy' }"
+              @click="schoolTab = 'academy'"
+            >
+              학원
+            </div>
           </div>
         </div>
 
-        <p class="section-subtitle text-end">반경 1km내의 보육시설</p>
+        <!-- 2) 탭별 부제목(설명) -->
+        <p class="section-subtitle text-end">반경 1km 이내</p>
 
+        <!-- 탭별 렌더링 -->
         <div class="facility-list">
-          <div
-            class="facility-item"
-            v-for="(kindergarten, index) in property.facilities.kindergartens"
-            :key="index"
-          >
+          <!-- 어린이집·유치원 -->
+          <template v-if="schoolTab === 'nursery'">
+            <div class="transport-type">✏️ 어린이집 ({{ nurseryList.length }})</div>
+            <div class="transport-item" v-for="n in nurseryList" :key="n.id">
+              <div class="station-name">{{ n.place_name }}</div>
+              <div class="distance">{{ n.distance }}m</div>
+            </div>
+            <p v-if="nurseryList.length === 0" class="text-muted">
+              조회된 어린이집 정보가 없습니다.
+            </p>
+          </template>
+
+          <!-- 학교 -->
+          <template v-else-if="schoolTab === 'school'">
+            <!-- 초등학교 -->
+            <div class="transport-type">✏️ 초등학교 ({{ elementarySchools.length }})</div>
+            <div class="transport-item" v-for="s in elementarySchools" :key="s.id">
+              <div class="station-name">{{ s.place_name }}</div>
+              <div class="distance">{{ s.distance }}m</div>
+            </div>
+            <p v-if="elementarySchools.length === 0" class="text-muted">
+              조회된 초등학교가 없습니다.
+            </p>
+
+            <!-- 중학교 -->
+            <div class="transport-type">✏️ 중학교 ({{ middleSchools.length }})</div>
+            <div class="transport-item" v-for="s in middleSchools" :key="s.id">
+              <div class="station-name">{{ s.place_name }}</div>
+              <div class="distance">{{ s.distance }}m</div>
+            </div>
+            <p v-if="middleSchools.length === 0" class="text-muted">
+              조회된 중학교 정보가 없습니다.
+            </p>
+
+            <!-- 고등학교 -->
+            <div class="transport-type">✏️ 고등학교 ({{ highSchools.length }})</div>
+            <div class="transport-item" v-for="s in highSchools" :key="s.id">
+              <div class="station-name">{{ s.place_name }}</div>
+              <div class="distance">{{ s.distance }}m</div>
+            </div>
+            <p v-if="highSchools.length === 0" class="text-muted">
+              조회된 고등학교 정보가 없습니다.
+            </p>
+          </template>
+
+          <!-- 학원 -->
+          <template v-else>
+            <div class="transport-type">✏️ 학원 ({{ academyList.length }})</div>
+            <div class="transport-item" v-for="a in academyList" :key="a.id">
+              <div class="station-name">{{ a.place_name }}</div>
+              <div class="distance">{{ a.distance }}m</div>
+            </div>
+            <p v-if="academyList.length === 0" class="text-muted">조회된 학원 정보가 없습니다.</p>
+          </template>
+        </div>
+      </div>
+      <!-- 4) 의료 정보 (탭) 🔧 -->
+      <div class="detail-section">
+        <div class="section-header">
+          <h3>🚑 의료</h3>
+          <div class="tab-header">
+            <div
+              class="tab"
+              :class="{ active: medicalTab === 'hospital' }"
+              @click="medicalTab = 'hospital'"
+            >
+              병원
+            </div>
+            <div
+              class="tab"
+              :class="{ active: medicalTab === 'pharmacy' }"
+              @click="medicalTab = 'pharmacy'"
+            >
+              약국
+            </div>
+          </div>
+        </div>
+        <p class="section-subtitle text-end">반경 1km 이내</p>
+        <div class="facility-list">
+          <div class="transport-item" v-for="m in currentMedicalList" :key="m.id">
+            <div class="station-name">{{ m.place_name }}</div>
+            <div class="distance">{{ m.distance }}m</div>
+          </div>
+          <p v-if="currentMedicalList.length === 0" class="text-muted">
+            조회된 {{ medicalTab === 'hospital' ? '병원' : '약국' }}이 없습니다.
+          </p>
+        </div>
+      </div>
+      <!-- 여가 정보 섹션 -->
+      <div class="detail-section">
+        <div class="section-header">
+          <h3>🎉 여가</h3>
+          <p class="section-subtitle">반경 1km 이내</p>
+        </div>
+        <p class="section-description">이 단지에서 가까운 여가시설이에요.</p>
+        <div class="facility-list">
+          <!-- 문화시설 그룹 -->
+          <div class="transport-type">🛝 문화시설 ({{ cultureWithSubType.length }})</div>
+          <div class="facility-item" v-for="c in cultureWithSubType" :key="c.id">
             <div class="facility-info">
-              <div class="facility-name">{{ kindergarten.name }}</div>
-              <div class="facility-type">{{ kindergarten.type }}</div>
+              <div class="station-name">{{ c.place_name }}</div>
+              <div class="facility-type">{{ c.subType }}</div>
             </div>
             <div class="facility-distance">
-              <div class="distance-value">{{ kindergarten.distance }}</div>
-              <div class="distance-status text-success" v-if="kindergarten.status">
-                {{ kindergarten.status }}
-              </div>
+              <div class="distance">{{ c.distance }}m</div>
             </div>
           </div>
+          <p v-if="cultureWithSubType.length === 0" class="text-muted">
+            조회된 문화시설이 없습니다.
+          </p>
         </div>
-     </div> -->
+        <div class="facility-list">
+          <!-- 관광명소 그룹 -->
+          <div class="transport-type">🏖️ 관광명소 ({{ tourismWithSubType.length }})</div>
+
+          <div class="facility-item" v-for="t in tourismWithSubType" :key="t.id">
+            <div class="facility-info">
+              <div class="station-name">{{ t.place_name }}</div>
+              <div class="facility-type">{{ t.subType }}</div>
+            </div>
+            <div class="facility-distance">
+              <div class="distance">{{ t.distance }}m</div>
+            </div>
+          </div>
+
+          <p v-if="tourismWithSubType.length === 0" class="text-muted">
+            조회된 관광명소가 없습니다.
+          </p>
+        </div>
+      </div>
+      <!-- footer -->
+      <footer class="detail-footer">
+        <p>© 2025 키즈홈. All rights reserved.</p>
+      </footer>
     </div>
   </div>
 </template>
@@ -163,6 +263,7 @@
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue'
 import { houseApi } from '@/axios/house'
+import { userApiNoAuth } from '@/axios/user'
 import * as echarts from 'echarts'
 
 const props = defineProps({
@@ -170,7 +271,22 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  categoryData: Object,
 })
+
+let aiData = {
+  aptName: props.property.aptNm,
+  location: props.property.address,
+  dealHistory: [],
+}
+
+function formatToDate(dateStr) {
+  const parts = dateStr.split('.')
+  const year = parseInt(parts[0]) < 100 ? `20${parts[0].padStart(2, '0')}` : parts[0]
+  const month = parts[1].padStart(2, '0')
+  const day = parts[2].padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 const house = ref([])
 
@@ -182,6 +298,30 @@ const selectDetail = async (aptSeq) => {
     })
 
     house.value = response.data.data
+    aiData.dealHistory = response.data.data
+      // 날짜 기준 오름차순 정렬
+      .sort((a, b) => new Date(formatToDate(a.date)) - new Date(formatToDate(b.date)))
+      // 매핑
+      .map((item) => ({
+        dealDate: formatToDate(item.date),
+        dealAmount: item.dealAmount.toString(),
+      }))
+    await aiAnalyze()
+  } catch (e) {
+    console.log(e)
+  }
+}
+const aiResultText = ref('')
+
+const aiAnalyze = async () => {
+  try {
+    const response = await userApiNoAuth({
+      url: `/api/ai/analyze/price`,
+      method: 'post',
+      data: aiData,
+    })
+    aiResultText.value = response.data.data.content
+    console.log(response)
   } catch (e) {
     console.log(e)
   }
@@ -197,10 +337,63 @@ watch(
   { immediate: true }, // mount 시점에도 한 번 실행
 )
 
-console.log(house.value)
 const emit = defineEmits(['close'])
 
 const detailContent = ref(null)
+
+// 각 가테고리별
+////// 교통 정보 //////
+const subwayList = computed(() => props.categoryData.SW8 || []) // 지하철
+
+////// 학군 정보 //////
+const schoolTab = ref('nursery') // 탭 상태
+const nurseryList = computed(() => props.categoryData.PS3 || []) // 어린이집, 유치원
+const schoolList = computed(() => props.categoryData.SC4 || []) // 초중고
+const academyList = computed(() => props.categoryData.AC5 || []) // 학원
+const elementarySchools = computed(() =>
+  schoolList.value.filter((s) => s.category_name.includes('초등학교')),
+)
+const middleSchools = computed(() =>
+  schoolList.value.filter((s) => s.category_name.includes('중학교')),
+)
+const highSchools = computed(() =>
+  schoolList.value.filter(
+    (s) => s.category_name.includes('고등학교'), // “특성화고등학교”도 포함시키고 싶으면 그냥 '고등학교'로 체크
+  ),
+)
+
+////// 의료 정보 //////
+const medicalTab = ref('hospital')
+
+const hospitalList = computed(() => props.categoryData.HP8 || []) // 병원
+const pharmacyList = computed(() => props.categoryData.PM9 || []) // 약국
+
+const currentMedicalList = computed(() =>
+  medicalTab.value === 'hospital' ? hospitalList.value : pharmacyList.value,
+)
+
+////// 여가 정보 //////
+const cultureList = computed(() => props.categoryData.CT1 || []) // 문화시설
+const cultureWithSubType = computed(() =>
+  cultureList.value.map((item) => {
+    // '>'로 분리하고, 맨 마지막 요소만 가져와서 앞뒤 공백 제거
+    const parts = item.category_name.split('>').map((s) => s.trim())
+    return {
+      ...item,
+      subType: parts[parts.length - 1],
+    }
+  }),
+)
+const tourismList = computed(() => props.categoryData.AT4 || []) // 관광명소
+const tourismWithSubType = computed(() =>
+  tourismList.value.map((item) => {
+    const parts = item.category_name.split('>').map((s) => s.trim())
+    return {
+      ...item,
+      subType: parts[parts.length - 1], // e.g. '기념관', '전시관' 등
+    }
+  }),
+)
 
 // 뒤로가기
 const goBack = () => {
@@ -362,8 +555,34 @@ watch(
 
 .detail-section {
   padding: 16px;
-  min-height: calc(100% - 32px);
+  /* min-height: calc(100% - 32px); */
   border-bottom: 8px solid #f5f5f5;
+}
+
+.sub-section {
+  margin-top: 12px;
+}
+.sub-section ul {
+  padding-left: 16px;
+}
+.sub-section li {
+  margin-bottom: 4px;
+}
+
+.group-header {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  /* padding: 6px 12px;
+  /*background-color: #f9f9f9; /* 연한 회색 배경 */
+  /*border-top: 1px solid #e0e0e0; /* 위쪽 구분선 */
+  /*border-bottom: 1px solid #e0e0e0; /* 아래쪽 구분선 */
+  color: #4169e1;
+}
+/* facility-list 에서 바로 아래 .facility-item 과 붙지 않도록 여백 추가 */
+.group-header + .transport-item {
+  margin-top: 4px;
 }
 
 .property-title {
@@ -440,7 +659,7 @@ watch(
 
 .tab {
   padding: 8px 16px;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
 }
 
@@ -536,9 +755,16 @@ watch(
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   margin-bottom: 16px;
+  margin-top: 16px;
+  padding: 5px 12px;
+  width: 100%;
+
+  background-color: #f7f8fa;
+  border-radius: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .transport-item {
@@ -546,6 +772,10 @@ watch(
   align-items: center;
   padding: 12px 0;
   border-bottom: 1px solid #eee;
+}
+
+.transport-item:last-child {
+  border-bottom: none;
 }
 
 .line-badge {
@@ -631,10 +861,16 @@ watch(
   margin-top: 16px;
 }
 
+/* facility-list 안의 facility-item 중 마지막에는 border-bottom 없애기 */
+
+.facility-list .facility-item:last-child {
+  border-bottom: none;
+}
+
 .facility-item {
   display: flex;
   justify-content: space-between;
-  padding: 16px 0;
+  padding: 8px 0;
   border-bottom: 1px solid #eee;
 }
 
@@ -670,5 +906,34 @@ watch(
 
 .text-end {
   text-align: right;
+}
+.ai-summary-box {
+  background-color: #f8f9fb;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #e0e0e0;
+}
+
+.summary-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #4169e1;
+  margin-bottom: 8px;
+}
+
+.summary-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-line;
+}
+.detail-footer {
+  background: #f5f5f5; /* 연한 회색 배경 */
+  text-align: center; /* 가운데 정렬 */
+  padding: 16px 0; /* 상하 16px 여백 */
+  font-size: 12px; /* 작은 글씨 */
+  color: #888; /* 회색 글씨 */
+  border-top: 1px solid #ddd; /* 윗줄 구분선 */
 }
 </style>

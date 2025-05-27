@@ -36,10 +36,10 @@
     <div v-else class="property-list-container">
       <HouesListComponent
         :locationName="keyword"
-        @back="handleBack"
-        @select-property="selectProperty"
         :houseList="houseList"
         :onScrollEnd="searchKeyword"
+        @back="handleBack"
+        @select-property="selectProperty"
       />
     </div>
   </div>
@@ -57,7 +57,7 @@ const lastAptSeq = ref('')
 const activeTab = ref('recent')
 const showSearchResults = ref(false)
 
-const emit = defineEmits(['select-property'])
+const emit = defineEmits(['select-property', 'update:houseList'])
 
 const mainActive = inject('mainActive')
 function closePanel() {
@@ -119,6 +119,8 @@ const searchKeyword = async () => {
 function selectProperty(property) {
   emit('select-property', property)
 }
+
+watch(houseList, () => emit('update:houseList', houseList.value))
 </script>
 
 <style scoped>

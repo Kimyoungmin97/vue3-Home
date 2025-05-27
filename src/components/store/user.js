@@ -75,6 +75,7 @@ export const useUserStore = defineStore(
           aptSeq: decoded.aptSeq ? decoded.aptSeq : null,
           residence: decoded.residence ? decoded.residence : null,
         }
+        resetTokenTime()
       } catch (e) {
         console.log(e)
       }
@@ -97,9 +98,9 @@ export const useUserStore = defineStore(
         tokenTime.value = 0
         return '로그아웃 상태'
       }
-      if (tokenTime.value > 120) {
+      if (tokenTime.value > 3600) {
         return 'refresh token 만료'
-      } else if (tokenTime.value > 60) {
+      } else if (tokenTime.value > 1800) {
         return 'access token 만료'
       } else {
         return 'token 유효'

@@ -21,10 +21,10 @@
           @click="selectNotice(notice)"
         >
           <div class="notice-content">
-            <div class="notice-badge" v-if="notice.isImportant">중요</div>
+            <div class="notice-badge" v-if="notice.important">중요</div>
             <h3 class="notice-item-title">{{ notice.title }}</h3>
             <div class="notice-meta">
-              <span class="notice-date">{{ notice.date }}</span>
+              <span class="notice-date">{{ notice.createdAt }}</span>
             </div>
           </div>
         </div>
@@ -48,7 +48,7 @@
         </div>
         <div class="modal-body">
           <div class="notice-info">
-            <span class="notice-date">{{ selectedNotice.date }}</span>
+            <span class="notice-date">{{ selectedNotice.createdAt }}</span>
           </div>
           <div class="notice-detail-content" v-html="selectedNotice.content"></div>
 
@@ -76,125 +76,38 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, inject } from 'vue'
+import { userApiNoAuth } from '@/axios/user'
 
 const emit = defineEmits(['close'])
 
-// 공지사항 목록 데이터
-const notices = ref([
-  {
-    id: 1,
-    title: '[공지] 키즈홈 서비스 업데이트 안내',
-    date: '2024.05.20',
-    isImportant: true,
-    content: `
-        <p>안녕하세요, 키즈홈 서비스를 이용해 주시는 고객님들께 감사드립니다.</p>
-        <p>더 나은 서비스 제공을 위해 다음과 같이 시스템 업데이트를 진행할 예정입니다.</p>
-        <br>
-        <p><strong>■ 업데이트 일시</strong></p>
-        <p>2024년 5월 25일(토) 02:00 ~ 06:00 (4시간)</p>
-        <br>
-        <p><strong>■ 업데이트 내용</strong></p>
-        <p>1. 실거래가 조회 기능 개선</p>
-        <p>2. 지도 서비스 성능 향상</p>
-        <p>3. 커뮤니티 기능 추가</p>
-        <br>
-        <p>업데이트 시간 동안에는 서비스 이용이 제한될 수 있으니 양해 부탁드립니다.</p>
-        <p>더 좋은 서비스로 보답하겠습니다.</p>
-        <p>감사합니다.</p>
-      `,
-    attachments: [{ name: '업데이트_안내문.pdf', url: '#' }],
-  },
-  {
-    id: 2,
-    title: '개인정보 처리방침 개정 안내',
-    date: '2024.05.15',
-    isImportant: true,
-    content: `
-        <p>안녕하세요, 키즈홈입니다.</p>
-        <p>당사의 개인정보 처리방침이 2024년 6월 1일부로 개정될 예정임을 안내드립니다.</p>
-        <br>
-        <p><strong>■ 주요 변경사항</strong></p>
-        <p>1. 개인정보 보유기간 변경</p>
-        <p>2. 제3자 정보제공 항목 추가</p>
-        <p>3. 이용자 권리 행사 방법 구체화</p>
-        <br>
-        <p>자세한 내용은 첨부된 문서를 참고해 주시기 바랍니다.</p>
-        <p>문의사항이 있으시면 고객센터(1588-0000)로 연락주시기 바랍니다.</p>
-        <p>감사합니다.</p>
-      `,
-    attachments: [
-      { name: '개인정보처리방침_개정안.pdf', url: '#' },
-      { name: '신구대조표.xlsx', url: '#' },
-    ],
-  },
-  {
-    id: 3,
-    title: '키즈홈 모바일 앱 출시 안내',
-    date: '2024.05.10',
-    isImportant: false,
-    content: `
-        <p>안녕하세요, 키즈홈입니다.</p>
-        <p>더욱 편리한 서비스 이용을 위해 키즈홈 모바일 앱이 출시되었습니다.</p>
-        <br>
-        <p><strong>■ 주요 기능</strong></p>
-        <p>1. 실시간 알림 서비스</p>
-        <p>2. 위치 기반 맞춤 정보 제공</p>
-        <p>3. 간편 로그인 지원</p>
-        <br>
-        <p>앱스토어와 구글 플레이에서 '키즈홈'을 검색하여 다운로드 받으실 수 있습니다.</p>
-        <p>많은 이용 부탁드립니다.</p>
-      `,
-    attachments: [],
-  },
-  {
-    id: 4,
-    title: '2024년 상반기 서비스 점검 일정 안내',
-    date: '2024.04.28',
-    isImportant: false,
-    content: `
-        <p>안녕하세요, 키즈홈입니다.</p>
-        <p>2024년 상반기 정기 서비스 점검 일정을 안내드립니다.</p>
-        <br>
-        <p><strong>■ 점검 일정</strong></p>
-        <p>- 5월 25일(토) 02:00 ~ 06:00</p>
-        <p>- 6월 29일(토) 02:00 ~ 06:00</p>
-        <br>
-        <p>점검 시간 동안에는 서비스 이용이 제한될 수 있으니 양해 부탁드립니다.</p>
-        <p>더 안정적인 서비스 제공을 위해 노력하겠습니다.</p>
-        <p>감사합니다.</p>
-      `,
-    attachments: [],
-  },
-  {
-    id: 5,
-    title: '키즈홈 서비스 이용약관 개정 안내',
-    date: '2024.04.15',
-    isImportant: false,
-    content: `
-        <p>안녕하세요, 키즈홈입니다.</p>
-        <p>당사의 서비스 이용약관이 2024년 5월 1일부로 개정될 예정임을 안내드립니다.</p>
-        <br>
-        <p><strong>■ 주요 변경사항</strong></p>
-        <p>1. 서비스 이용 조건 변경</p>
-        <p>2. 회원 의무사항 추가</p>
-        <p>3. 게시물 관리 정책 구체화</p>
-        <br>
-        <p>자세한 내용은 첨부된 문서를 참고해 주시기 바랍니다.</p>
-        <p>문의사항이 있으시면 고객센터(1588-0000)로 연락주시기 바랍니다.</p>
-        <p>감사합니다.</p>
-      `,
-    attachments: [{ name: '이용약관_개정안.pdf', url: '#' }],
-  },
-])
+const notices = ref([]) // 빈 공지사항 배열
+
+// 공지사항 목록 API 호출 함수
+const getNotices = async () => {
+  try {
+    const response = await userApiNoAuth({
+      url: `/api/notices`,
+      method: 'get',
+    })
+    notices.value = response.data.data
+  } catch (e) {
+    console.log('공지사항 불러오기 실패: ', e)
+  }
+}
+
+// onMounted 에서 공지사항 불러오기
+onMounted(() => getNotices())
 
 // 공지사항 상세 표시 여부
 const showNoticeDetail = ref(false)
 const selectedNotice = ref(null)
 
 // 뒤로가기
+const mainActive = inject('mainActive')
+// 뒤로가기
 const goBack = () => {
-  emit('close')
+  mainActive.value = !mainActive.value
 }
 
 // 공지사항 선택

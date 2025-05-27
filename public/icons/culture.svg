@@ -1,0 +1,14 @@
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="white">
+  <!-- 귀 -->
+  <circle cx="25" cy="25" r="10"></circle>
+  <circle cx="75" cy="25" r="10"></circle>
+  <!-- 얼굴 -->
+  <circle cx="50" cy="50" r="25"></circle>
+  <!-- 눈 -->
+  <circle cx="40" cy="45" r="3"></circle>
+  <circle cx="60" cy="45" r="3"></circle>
+  <!-- 코 -->
+  <circle cx="50" cy="55" r="4"></circle>
+  <!-- 몸통 -->
+  <ellipse cx="50" cy="85" rx="20" ry="15"></ellipse>
+</svg>

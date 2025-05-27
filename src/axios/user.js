@@ -32,14 +32,31 @@ userApi.interceptors.response.use(
     return response
   },
   async (error) => {
+    const userStore = useUserStore()
     console.log('[오류 수신 1]: ', error)
+
+    if (error.response?.status === 401 && userStore.tokens?.refreshToken) {
+      try {
+        // 1. Refresh 요청
+        await userStore.refresh()
+
+        // 2. 원래 요청 복사 후 재시도
+        const originalRequest = error.config
+        originalRequest.headers['Authorization'] = `Bearer ${userStore.tokens.accessToken}`
+        return userApi(originalRequest)
+      } catch (refreshError) {
+        console.warn('🔁 토큰 갱신 실패:', refreshError)
+        userStore.logout() // refresh도 실패한 경우 로그아웃
+        return Promise.reject(refreshError)
+      }
+    }
     return Promise.reject(error)
   },
 )
 
 const userApiNoAuth = axios.create({
   baseURL: 'http://localhost:8080',
-  timeout: 1000,
+  timeout: 10000,
 })
 
 userApiNoAuth.interceptors.request.use(

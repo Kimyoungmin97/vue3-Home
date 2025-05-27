@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <!-- 헤더 -->
-    <div class="login-header" v-if="!showRegister">
+    <div class="login-header" v-if="!showRegister && !showPasswordReset">
       <button class="back-button" @click="goBack">
         <i class="bi bi-chevron-left"></i>
       </button>
@@ -9,7 +9,7 @@
     </div>
 
     <!-- 로그인 폼 -->
-    <div class="login-form" v-if="!showRegister">
+    <div class="login-form" v-if="!showRegister && !showPasswordReset">
       <!-- 휴대폰번호/이메일 입력 -->
       <div class="form-group">
         <label>휴대폰번호 · 이메일</label>
@@ -34,7 +34,7 @@
 
       <!-- 비밀번호 찾기 -->
       <div class="forgot-password">
-        <a href="#">비밀번호를 잊으셨나요?</a>
+        <a href="#" @click.prevent="showPasswordReset = true">비밀번호를 잊으셨나요?</a>
       </div>
 
       <!-- 로그인 버튼 -->
@@ -48,12 +48,21 @@
 
     <!-- 회원가입 폼 -->
     <RegisterFormComponent v-if="showRegister" @close="showRegister = false" />
+
+    <!-- 비밀번호 찾기 폼 -->
+
+    <PasswordResetComponent
+      v-if="showPasswordReset"
+      @close="showPasswordReset = false"
+      @go-to-login="showPasswordReset = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, inject, provide } from 'vue'
 import RegisterFormComponent from './RegisterFormComponent.vue'
+import PasswordResetComponent from './PasswordResetComponent.vue'
 import { useUserStore } from '@/components/store/user'
 const userStore = useUserStore()
 const emit = defineEmits(['close'])
@@ -62,6 +71,7 @@ const emit = defineEmits(['close'])
 const username = ref('')
 const password = ref('')
 const showRegister = ref(false)
+const showPasswordReset = ref(false)
 
 // 폼 유효성 검사
 const isFormValid = computed(() => {
@@ -88,9 +98,6 @@ const login = async () => {
     console.log(e)
     alert(e?.response?.data?.message)
   }
-
-  // 로그인 성공 후 처리
-  // ...
 }
 </script>
 

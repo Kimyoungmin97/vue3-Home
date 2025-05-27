@@ -17,6 +17,12 @@
         <p class="field-guide">아이디는 수정할 수 없습니다.</p>
       </div>
 
+      <!-- 이름 -->
+      <div class="form-group">
+        <label>이름</label>
+        <input type="text" class="form-control" placeholder="이름 입력" v-model="user.name" />
+      </div>
+
       <!-- 현재 비밀번호 -->
       <div class="form-group">
         <label>현재 비밀번호</label>
@@ -56,27 +62,6 @@
         <input type="email" class="form-control" placeholder="이메일 입력" v-model="user.email" />
       </div>
 
-      <!-- 닉네임 입력 -->
-      <div class="form-group">
-        <label>닉네임</label>
-        <div class="nickname-input-container">
-          <input
-            type="text"
-            class="form-control"
-            placeholder="닉네임 30자 이내 입력"
-            v-model="user.nickname"
-            maxlength="30"
-          />
-          <div class="nickname-counter">
-            {{ nicknameLen }}/30
-            <button class="clear-button" v-if="user.nickname" @click="user.nickname = ''">
-              <i class="bi bi-x-circle-fill"></i>
-            </button>
-          </div>
-        </div>
-        <p class="nickname-guide">언제든지 변경 가능합니다. (한글/영문/숫자2~30자, 중복 불가)</p>
-      </div>
-
       <!-- 거주지 입력 -->
       <div class="form-group">
         <label>거주지</label>
@@ -86,41 +71,35 @@
           placeholder="현재 거주하고 있는 지역을 입력해주세요"
           v-model="user.residence"
         />
-        <p class="residence-guide">예: 서울시 강남구, 경기도 성남시 분당구 등</p>
+        <p class="residence-guide">예: 서울특별시 강남구 **아파트 등</p>
       </div>
 
       <!-- 수정 버튼 -->
       <button class="update-button" :disabled="!isFormValid" @click="updateProfile">
         수정하기
       </button>
-
-      <!-- 회원 탈퇴 링크 -->
-      <div class="withdrawal-link">
-        <a href="#" @click.prevent="confirmWithdrawal">회원 탈퇴하기</a>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
+import { userApi } from '@/axios/user'
+import { useUserStore } from '@/components/store/user'
 
-const emit = defineEmits(['close'])
+const userStore = useUserStore()
+const mainActive = inject('mainActive')
 
 // 폼 데이터
 const currentPassword = ref('')
 const passwordConfirm = ref('')
 const user = ref({
-  username: 'user123', // 실제로는 로그인된 사용자 정보를 가져와야 함
-  email: 'user@example.com',
-  nickname: '홍길동',
-  residence: '경기도 성남시 분당구',
+  username: '',
+  name: '',
+  email: '',
+  residence: '',
   password: '',
 })
-
-const nicknameLen = computed(() =>
-  user.value.nickname?.length > 0 ? user.value.nickname.length : 0,
-)
 
 // 폼 유효성 검사
 const isFormValid = computed(() => {
@@ -131,44 +110,75 @@ const isFormValid = computed(() => {
   return (
     currentPassword.value.trim() !== '' &&
     passwordValid &&
+    user.value.name?.trim() !== '' &&
     user.value.email?.trim() !== '' &&
-    user.value.nickname?.length >= 2 &&
     user.value.residence?.trim() !== ''
   )
 })
 
 // 뒤로가기
 const goBack = () => {
-  emit('close')
+  mainActive.value = !mainActive.value
 }
 
 // 사용자 정보 로드
-const loadUserData = () => {
-  // 실제로는 API 호출 등을 통해 사용자 정보를 가져와야 함
-  console.log('사용자 정보 로드')
+const loadUserData = async () => {
+  try {
+    const response = await userApi({
+      url: '/api/user',
+      method: 'get',
+    })
+
+    const userData = response.data.data
+    user.value = {
+      username: userData.username,
+      name: userData.name,
+      email: userData.email,
+      residence: userData.residence,
+      password: '',
+    }
+  } catch (error) {
+    console.error('사용자 정보 로드 실패:', error)
+    alert('사용자 정보를 불러오는데 실패했습니다.')
+  }
 }
 
 // 회원정보 수정 처리
-const updateProfile = () => {
+const updateProfile = async () => {
   if (!isFormValid.value) return
 
-  // 회원정보 수정 로직 구현 (API 호출 등)
-  console.log('회원정보 수정:', {
-    currentPassword: currentPassword.value,
-    ...user.value,
-  })
+  try {
+    const updateData = {
+      username: user.value.username,
+      password: user.value.password,
+      name: user.value.name,
+      email: user.value.email,
+      residence: user.value.residence,
+    }
 
-  alert('회원정보가 성공적으로 수정되었습니다.')
-  emit('close')
-}
+    // 새 비밀번호가 입력된 경우에만 포함
+    if (user.value.password) {
+      updateData.newPassword = user.value.password
+    }
 
-// 회원 탈퇴 확인
-const confirmWithdrawal = () => {
-  if (confirm('정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-    // 회원 탈퇴 로직 구현 (API 호출 등)
-    console.log('회원 탈퇴 처리')
-    alert('회원 탈퇴가 완료되었습니다.')
-    emit('close')
+    await userApi({
+      url: '/api/user',
+      method: 'put',
+      data: updateData,
+    })
+
+    alert('회원정보가 성공적으로 수정되었습니다.')
+
+    // 사용자 정보 다시 로드
+    await loadUserData()
+
+    // 폼 초기화
+    currentPassword.value = ''
+    user.value.password = ''
+    passwordConfirm.value = ''
+  } catch (error) {
+    console.error('회원정보 수정 실패:', error)
+    alert(error?.response?.data?.message || '회원정보 수정에 실패했습니다.')
   }
 }
 
@@ -236,7 +246,6 @@ onMounted(() => {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 16px;
-  background-color: #f5f5f5;
 }
 
 .form-control:disabled {
@@ -244,41 +253,7 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
-.field-guide {
-  font-size: 12px;
-  color: #999;
-  margin-top: 8px;
-  margin-bottom: 0;
-}
-
-.nickname-input-container {
-  position: relative;
-}
-
-.nickname-counter {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
-  color: #999;
-  display: flex;
-  align-items: center;
-}
-
-.clear-button {
-  background: none;
-  border: none;
-  padding: 0;
-  margin-left: 8px;
-  color: #999;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nickname-guide,
+.field-guide,
 .residence-guide {
   font-size: 12px;
   color: #999;
@@ -287,8 +262,8 @@ onMounted(() => {
 }
 
 .update-button {
-  background-color: #0d6efd;
-  color: white;
+  background-color: #f0f0f0;
+  color: #333;
   border: none;
   border-radius: 4px;
   padding: 14px;
@@ -301,19 +276,10 @@ onMounted(() => {
 .update-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-  background-color: #f0f0f0;
-  color: #333;
 }
 
-.withdrawal-link {
-  text-align: center;
-  margin-top: 24px;
-  margin-bottom: 24px;
-}
-
-.withdrawal-link a {
-  color: #dc3545;
-  font-size: 14px;
-  text-decoration: none;
+.update-button:not(:disabled) {
+  background-color: #0d6efd;
+  color: white;
 }
 </style>

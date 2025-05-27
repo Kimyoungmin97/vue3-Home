@@ -4,12 +4,12 @@
       <!-- 상단 헤더 -->
       <div class="post-header">
         <div class="header-top">
-          <button class="btn btn-outline-secondary rounded-pill location-btn">
+          <!-- <button class="btn btn-outline-secondary rounded-pill location-btn">
             내 활동 <i class="bi bi-chevron-down"></i>
           </button>
           <button class="btn btn-link search-btn">
             <i class="bi bi-search"></i>
-          </button>
+          </button> -->
         </div>
 
         <h2 class="post-title">동네글</h2>
@@ -46,7 +46,7 @@
           <div class="user-info">
             <div class="user-profile">
               <div class="profile-image">
-                <img :src="post.userImage" alt="프로필 이미지" />
+                <img src="/base.jpg" alt="프로필 이미지" />
               </div>
               <div class="user-details">
                 <div class="username">{{ post.name }}</div>
@@ -92,7 +92,7 @@
     <PostDetailComponent
       v-if="showPostDetail"
       :post="selectedPost"
-      @close="showPostDetail = false"
+      @close="closeDetailPost"
       @edit="goToEditPage"
       @deleted="firstSearchPost"
     />
@@ -132,10 +132,10 @@ const firstSearchPost = async () => {
     const response = await userApiNoAuth({
       url: '/api/boards',
       method: 'get',
-      params: { aptSeq: userStore.loginUser.aptSeq, lastPostId: lastPostId.value },
+      params: { aptSeq: userStore.loginUser.aptSeq, lastPostId: 0 },
     })
     posts.value = response.data.data
-    lastPostId.value = posts.value.at(-1)?.postId ?? null
+    if (posts.value.length >= 10) lastPostId.value = posts.value.at(-1)?.postId ?? null
   } finally {
     isLoading.value = false
   }
@@ -189,6 +189,12 @@ const goToEditPage = (post) => {
 const closeAddPost = () => {
   showAddPost.value = false
   editingPost.value = null
+  firstSearchPost()
+}
+
+const closeDetailPost = () => {
+  showPostDetail.value = false
+  firstSearchPost()
 }
 </script>
 
@@ -285,7 +291,7 @@ const closeAddPost = () => {
 }
 
 .post-list {
-  height: 80vh;
+  height: 95vh;
   flex: 1;
   overflow-y: auto;
   padding: 8px;
